@@ -1,45 +1,23 @@
 import scalapb.compiler.Version._
-import sbtrelease.ReleaseStateTransformations._
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 val Scala211 = "2.11.12"
 
 val tagName = Def.setting {
-  s"v${if (releaseUseGlobalVersion.value) (version in ThisBuild).value else version.value}"
+  (version in ThisBuild).value
 }
 
 val tagOrHash = Def.setting {
-  if (isSnapshot.value) sys.process.Process("git rev-parse HEAD").lineStream_!.head
+  if (isSnapshot.value) sys.process.Process("git rev-parse HEAD").lines_!.head
   else tagName.value
 }
 
 val unusedWarnings = Seq("-Ywarn-unused", "-Ywarn-unused-import")
 
-val scalapbJsonCommon = crossProject(JVMPlatform, JSPlatform)
+val scalapbJsonCommon = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .in(file("."))
-  .enablePlugins(BuildInfoPlugin)
   .settings(
-    commonSettings,
-    mappings in (Compile, packageSrc) ++= (managedSources in Compile).value.map { f =>
-      // https://github.com/sbt/sbt-buildinfo/blob/v0.7.0/src/main/scala/sbtbuildinfo/BuildInfoPlugin.scala#L58
-      val buildInfoDir = "sbt-buildinfo"
-      val path = if (f.getAbsolutePath.contains(buildInfoDir)) {
-        (file(buildInfoPackage.value) / f
-          .relativeTo((sourceManaged in Compile).value / buildInfoDir)
-          .get
-          .getPath).getPath
-      } else {
-        f.relativeTo((sourceManaged in Compile).value).get.getPath
-      }
-      (f, path)
-    },
-    buildInfoPackage := "scalapb_json",
-    buildInfoObject := "ScalapbJsonCommonBuildInfo",
-    buildInfoKeys := Seq[BuildInfoKey](
-      "scalapbVersion" -> scalapbVersion,
-      scalaVersion,
-      version
-    )
+    commonSettings
   )
   .jvmSettings(
     PB.targets in Test := Seq(
@@ -47,7 +25,7 @@ val scalapbJsonCommon = crossProject(JVMPlatform, JSPlatform)
       scalapb.gen(javaConversions = true) -> (sourceManaged in Test).value
     ),
     libraryDependencies ++= Seq(
-      "com.google.protobuf" % "protobuf-java-util" % protobufVersion % "test",
+      "com.google.protobuf" % "protobuf-java-util" % protobufVersion % "test"
     )
   )
   .jsSettings(
@@ -58,7 +36,8 @@ val scalapbJsonCommon = crossProject(JVMPlatform, JSPlatform)
     },
     libraryDependencies ++= Seq(
       "io.github.cquiroz" %%% "scala-java-time" % "2.0.0-M12"
-    ),
+    )
+  ).platformsSettings(JSPlatform, NativePlatform)(
     PB.targets in Test := Seq(
       scalapb.gen(javaConversions = false) -> (sourceManaged in Test).value
     )
@@ -67,8 +46,6 @@ val scalapbJsonCommon = crossProject(JVMPlatform, JSPlatform)
 commonSettings
 
 val noPublish = Seq(
-  PgpKeys.publishLocalSigned := {},
-  PgpKeys.publishSigned := {},
   publishLocal := {},
   publish := {},
   publishArtifact in Compile := false
@@ -91,15 +68,14 @@ lazy val commonSettings = Seq[Def.SettingsDefinition](
   description := "Json/Protobuf convertors for ScalaPB",
   licenses += ("MIT", url("https://opensource.org/licenses/MIT")),
   organization := "io.github.scalapb-json",
-  name := UpdateReadme.scalapbJsonCommonName,
   Project.inConfig(Test)(sbtprotoc.ProtocPlugin.protobufConfigSettings),
   PB.targets in Compile := Nil,
   PB.protoSources in Test := Seq(file("shared/src/test/protobuf")),
   libraryDependencies ++= Seq(
-    "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapbVersion,
-    "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapbVersion % "protobuf,test",
-    "org.scalatest" %%% "scalatest" % "3.0.4" % "test"
+    "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf,test",
+    "com.lihaoyi" %%% "utest" % "0.6.3" % "test"
   ),
+  testFrameworks += new TestFramework("utest.runner.Framework"),
   pomExtra in Global := {
     <url>https://github.com/scalapb-json/scalapb-json-common</url>
       <scm>
@@ -130,35 +106,16 @@ lazy val commonSettings = Seq[Def.SettingsDefinition](
       "-doc-source-url",
       s"https://github.com/scalapb-json/scalapb-json-common/tree/${t}€{FILE_PATH}.scala"
     )
-  },
-  ReleasePlugin.extraReleaseCommands,
-  commands += Command.command("updateReadme")(UpdateReadme.updateReadmeTask),
-  releaseTagName := tagName.value,
-  releaseProcess := Seq[ReleaseStep](
-    checkSnapshotDependencies,
-    inquireVersions,
-    runClean,
-    runTest,
-    setReleaseVersion,
-    commitReleaseVersion,
-    UpdateReadme.updateReadmeProcess,
-    tagRelease,
-    ReleaseStep(
-      action = { state =>
-        val extracted = Project extract state
-        extracted.runAggregated(
-          PgpKeys.publishSigned in Global in extracted.get(thisProjectRef),
-          state)
-      },
-      enableCrossBuild = true
-    ),
-    setNextVersion,
-    commitNextVersion,
-    releaseStepCommand("sonatypeReleaseAll"),
-    UpdateReadme.updateReadmeProcess,
-    pushChanges
-  )
+  }
 ).flatMap(_.settings)
 
-val scalapbJsonCommonJVM = scalapbJsonCommon.jvm
-val scalapbJsonCommonJS = scalapbJsonCommon.js
+val scalapbURI = uri("git://github.com/scalapb/ScalaPB#e19f5cf844029b95f934f5959e20cf32d5a77794")
+
+def dependsOnScalaPB(x: Project, s: String) = {
+  val p = ProjectRef(scalapbURI, "runtime" + s)
+  x.dependsOn(p, p % "test,protobuf")
+}
+
+val scalapbJsonCommonJVM = dependsOnScalaPB(scalapbJsonCommon.jvm, "JVM")
+val scalapbJsonCommonJS = dependsOnScalaPB(scalapbJsonCommon.js, "JS")
+val scalapbJsonCommonNative = dependsOnScalaPB(scalapbJsonCommon.native, "Native")

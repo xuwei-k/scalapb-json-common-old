@@ -1,12 +1,12 @@
 language: scala
-sudo: false
+sudo: required
+before_install:
+- curl https://raw.githubusercontent.com/scala-native/scala-native/06e61984ca0f4/bin/travis_setup.sh | bash -
 scala:
-- 2.10.7
 - 2.11.12
-- 2.12.4
 jdk: oraclejdk8
 script:
-- sbt "scalafmt::test" "test:scalafmt::test" "sbt:scalafmt::test" "++ ${TRAVIS_SCALA_VERSION}! -v" test
+- sbt "++ ${TRAVIS_SCALA_VERSION}" test
 cache:
   directories:
   - $HOME/.ivy2/cache
