@@ -15,7 +15,7 @@ val tagOrHash = Def.setting {
 
 val unusedWarnings = Seq("-Ywarn-unused", "-Ywarn-unused-import")
 
-val scalapbJsonCommon = crossProject(JVMPlatform, JSPlatform)
+val scalapbJsonCommon = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .in(file("."))
   .enablePlugins(BuildInfoPlugin)
   .settings(
@@ -59,9 +59,14 @@ val scalapbJsonCommon = crossProject(JVMPlatform, JSPlatform)
     libraryDependencies ++= Seq(
       "io.github.cquiroz" %%% "scala-java-time" % "2.0.0-M12"
     ),
+  )
+  .platformsSettings(JSPlatform, NativePlatform)(
     PB.targets in Test := Seq(
       scalapb.gen(javaConversions = false) -> (sourceManaged in Test).value
     )
+  )
+  .nativeSettings(
+    scalapropsNativeSettings
   )
 
 commonSettings
@@ -77,6 +82,7 @@ val noPublish = Seq(
 noPublish
 
 lazy val commonSettings = Seq[Def.SettingsDefinition](
+  scalapropsCoreSettings,
   unmanagedResources in Compile += (baseDirectory in LocalRootProject).value / "LICENSE.txt",
   scalaVersion := Scala211,
   crossScalaVersions := Seq("2.12.4", Scala211, "2.10.7"),
@@ -97,8 +103,8 @@ lazy val commonSettings = Seq[Def.SettingsDefinition](
   PB.protoSources in Test := Seq(file("shared/src/test/protobuf")),
   libraryDependencies ++= Seq(
     "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapbVersion,
-    "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapbVersion % "protobuf,test",
-    "org.scalatest" %%% "scalatest" % "3.0.4" % "test"
+    "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf,test",
+    "com.github.scalaprops" %%% "scalaprops" % "0.5.2" % "test",
   ),
   pomExtra in Global := {
     <url>https://github.com/scalapb-json/scalapb-json-common</url>
@@ -162,3 +168,4 @@ lazy val commonSettings = Seq[Def.SettingsDefinition](
 
 val scalapbJsonCommonJVM = scalapbJsonCommon.jvm
 val scalapbJsonCommonJS = scalapbJsonCommon.js
+val scalapbJsonCommonNative = scalapbJsonCommon.native
