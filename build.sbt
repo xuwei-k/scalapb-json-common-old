@@ -20,7 +20,6 @@ val scalapbJsonCommon = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .enablePlugins(BuildInfoPlugin)
   .settings(
     commonSettings,
-    scalapropsCoreSettings,
     mappings in (Compile, packageSrc) ++= (managedSources in Compile).value.map { f =>
       // https://github.com/sbt/sbt-buildinfo/blob/v0.7.0/src/main/scala/sbtbuildinfo/BuildInfoPlugin.scala#L58
       val buildInfoDir = "sbt-buildinfo"
@@ -52,7 +51,6 @@ val scalapbJsonCommon = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
   .nativeSettings(
-    scalapropsNativeSettings,
     crossScalaVersions := Scala211 :: Nil,
     nativeLinkStubs := true
   )
@@ -67,6 +65,9 @@ val scalapbJsonCommon = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
   .platformsSettings(JVMPlatform, JSPlatform)(
+    // TODO enable in scala-native https://github.com/scalaprops/sbt-scalaprops/issues/4
+    scalapropsCoreSettings,
+    libraryDependencies += "com.github.scalaprops" %%% "scalaprops" % "0.5.2" % "test",
     Seq((Compile, "main"), (Test, "test")).map {
       case (x, y) =>
         unmanagedSourceDirectories in x += {
@@ -115,7 +116,6 @@ lazy val commonSettings = Seq[Def.SettingsDefinition](
   PB.targets in Compile := Nil,
   PB.protoSources in Test := Seq(file("shared/src/test/protobuf")),
   libraryDependencies ++= Seq(
-    "com.github.scalaprops" %%% "scalaprops" % "0.5.2" % "test",
     "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapbVersion,
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf,test",
     "com.lihaoyi" %%% "utest" % "0.6.3" % "test"

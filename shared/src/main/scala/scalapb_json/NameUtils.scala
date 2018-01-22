@@ -21,8 +21,11 @@ object NameUtils {
   }
 
   def lowerSnakeCaseToCamelCase(name: String): String = {
+    lowerSnakeCaseToCamelCaseWithBuffer(name, new java.lang.StringBuilder(name.length)).toString
+  }
+
+  def lowerSnakeCaseToCamelCaseWithBuffer(name: String, buf: Appendable): buf.type = {
     import java.util.Locale.ENGLISH
-    val buf = new java.lang.StringBuilder(name.length)
 
     def toProperCase(s: String): Unit = if(!s.isEmpty) {
       buf.append(s.substring(0, 1).toUpperCase(ENGLISH))
@@ -40,7 +43,7 @@ object NameUtils {
       }
     }
     loop(1)
-    buf.toString
+    buf
   }
 
   def camelCaseToSnakeCase(str: String): String = {
