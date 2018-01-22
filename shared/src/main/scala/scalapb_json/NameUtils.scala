@@ -61,7 +61,7 @@ object NameUtils {
   }
 
   def lowerSnakeCaseToCamelCaseWithBuffer(name: String, buf: Appendable): buf.type = {
-    def toProperCase (s: String): Unit = if (!s.isEmpty) {
+    def toProperCase(s: String): Unit = if (!s.isEmpty) {
       buf.append(toUpper(s(0)))
       toLowerCase(s.substring(1), buf)
     }
@@ -70,7 +70,7 @@ object NameUtils {
     toLowerCase(array(0), buf)
 
     @annotation.tailrec
-    def loop (i: Int): Unit = {
+    def loop(i: Int): Unit = {
       if (i < array.length) {
         toProperCase(array(i))
         loop(i + 1)
@@ -90,7 +90,7 @@ object NameUtils {
       val array = str.toCharArray
 
       @annotation.tailrec
-      def loop (i: Int): String = {
+      def loop(i: Int): String = {
         if (i < array.length) {
           val c = array(i)
           if (isUpper(c)) {
