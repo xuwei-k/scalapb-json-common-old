@@ -16,4 +16,15 @@ object ScalapbJsonCommonScalapropsTest extends Scalaprops {
     }
   }
 
+  val `java FieldMaskUtil does not roundtrip toJsonString/fromJsonString !!!` = {
+    implicit val g: Gen[String] = Gen.alphaString
+    implicit val fieldMaskGen = Gen.from1[List[String], FieldMask](FieldMask.apply _)
+    Property.forAll { x: FieldMask =>
+      val json = FieldMaskUtil.toJsonString(FieldMask.toJavaProto(x))
+      val y = FieldMask.fromJavaProto(FieldMaskUtil.fromJsonString(json))
+      utest.assert(x == y)
+      true
+    }
+  }
+
 }
