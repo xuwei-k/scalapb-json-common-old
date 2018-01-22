@@ -24,42 +24,76 @@ object NameUtils {
     lowerSnakeCaseToCamelCaseWithBuffer(name, new java.lang.StringBuilder(name.length)).toString
   }
 
-  def lowerSnakeCaseToCamelCaseWithBuffer(name: String, buf: Appendable): buf.type = {
-    def toProperCase(s: String): Unit = if(!s.isEmpty) {
-      buf.append(s.head.toUpper)
-      s.substring(1).foreach{ c =>
-        buf.append(c.toLower)
+  private[this] def isLower(c: Char): Boolean = {
+    'a' <= c && c <= 'z'
+  }
+
+  private[this] def isUpper(c: Char): Boolean = {
+    'A' <= c && c <= 'Z'
+  }
+
+  private[this] def toUpper(c: Char): Char = {
+    if (isLower(c)) {
+      (c - 32).asInstanceOf[Char]
+    } else {
+      c
+    }
+  }
+
+  private[this] def toLower(c: Char): Char = {
+    if (isUpper(c)) {
+      (c + 32).asInstanceOf[Char]
+    } else {
+      c
+    }
+  }
+
+  private[this] def toLowerCase(s: String, b: Appendable): Unit = {
+    @annotation.tailrec
+    def loop(i: Int): Unit = {
+      if (i < s.length) {
+        b.append(toLower(s(i)))
+        loop(i + 1)
       }
     }
 
-    val array = name.split("_")
-    array.head.foreach{ c =>
-      buf.append(c.toLower)
+    loop(0)
+  }
+
+  def lowerSnakeCaseToCamelCaseWithBuffer(name: String, buf: Appendable): buf.type = {
+    def toProperCase (s: String): Unit = if (!s.isEmpty) {
+      buf.append(toUpper(s(0)))
+      toLowerCase(s.substring(1), buf)
     }
 
+    val array = name.split("_")
+    toLowerCase(array(0), buf)
+
     @annotation.tailrec
-    def loop(i: Int): Unit = {
-      if(i < array.length) {
+    def loop (i: Int): Unit = {
+      if (i < array.length) {
         toProperCase(array(i))
         loop(i + 1)
       }
     }
+
     loop(1)
     buf
   }
 
   def camelCaseToSnakeCase(str: String): String = {
-    if(str.isEmpty) {
+    if (str.isEmpty) {
       ""
     } else {
       val buf = new java.lang.StringBuilder(str.length)
-      buf.append(str.head.toLower)
+      buf.append(toLower(str(0)))
       val array = str.toCharArray
+
       @annotation.tailrec
-      def loop(i: Int): String = {
-        if(i < array.length) {
+      def loop (i: Int): String = {
+        if (i < array.length) {
           val c = array(i)
-          if('A' <= c && c <= 'Z') {
+          if (isUpper(c)) {
             buf.append('_')
             buf.append((c + 32).asInstanceOf[Char])
           } else {
@@ -70,6 +104,7 @@ object NameUtils {
           buf.toString
         }
       }
+
       loop(1)
     }
   }
