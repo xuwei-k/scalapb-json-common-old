@@ -25,15 +25,17 @@ object NameUtils {
   }
 
   def lowerSnakeCaseToCamelCaseWithBuffer(name: String, buf: Appendable): buf.type = {
-    import java.util.Locale.ENGLISH
-
     def toProperCase(s: String): Unit = if(!s.isEmpty) {
-      buf.append(s.substring(0, 1).toUpperCase(ENGLISH))
-      buf.append(s.substring(1).toLowerCase(ENGLISH))
+      buf.append(s.head.toUpper)
+      s.substring(1).foreach{ c =>
+        buf.append(c.toLower)
+      }
     }
 
     val array = name.split("_")
-    buf.append(array.head.toLowerCase(ENGLISH))
+    array.head.foreach{ c =>
+      buf.append(c.toLower)
+    }
 
     @annotation.tailrec
     def loop(i: Int): Unit = {
