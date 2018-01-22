@@ -20,10 +20,6 @@ object NameUtils {
     b.toString
   }
 
-  def lowerSnakeCaseToCamelCase(name: String): String = {
-    lowerSnakeCaseToCamelCaseWithBuffer(name, new java.lang.StringBuilder(name.length)).toString
-  }
-
   private[this] def isLower(c: Char): Boolean = {
     'a' <= c && c <= 'z'
   }
@@ -60,6 +56,10 @@ object NameUtils {
     loop(0)
   }
 
+  def lowerSnakeCaseToCamelCase(name: String): String = {
+    lowerSnakeCaseToCamelCaseWithBuffer(name, new java.lang.StringBuilder(name.length)).toString
+  }
+
   def lowerSnakeCaseToCamelCaseWithBuffer(name: String, buf: Appendable): buf.type = {
     def toProperCase(s: String): Unit = if (!s.isEmpty) {
       buf.append(toUpper(s(0)))
@@ -87,12 +87,11 @@ object NameUtils {
     } else {
       val buf = new java.lang.StringBuilder(str.length)
       buf.append(toLower(str(0)))
-      val array = str.toCharArray
 
       @annotation.tailrec
       def loop(i: Int): String = {
-        if (i < array.length) {
-          val c = array(i)
+        if (i < str.length) {
+          val c = str(i)
           if (isUpper(c)) {
             buf.append('_')
             buf.append((c + 32).asInstanceOf[Char])
