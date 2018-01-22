@@ -130,7 +130,7 @@ object ScalapbJsonCommon {
     buf.toString
   }
 
-  def fromJsonString(value: String): FieldMask = {
+  def fieldMaskFromJsonString(value: String): FieldMask = {
     val result = value.split(",").toIterator.withFilter(_.nonEmpty).map{ path =>
       NameUtils.camelCaseToSnakeCase(path)
     }.toList
