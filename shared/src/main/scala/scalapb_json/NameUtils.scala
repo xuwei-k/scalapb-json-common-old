@@ -19,4 +19,53 @@ object NameUtils {
     inner(name, 0, upperInitial)
     b.toString
   }
+
+  def lowerSnakeCaseToCamelCase(name: String): String = {
+    import java.util.Locale.ENGLISH
+    val buf = new java.lang.StringBuilder(name.length)
+
+    def toProperCase(s: String): Unit = if(!s.isEmpty) {
+      buf.append(s.substring(0, 1).toUpperCase(ENGLISH))
+      buf.append(s.substring(1).toLowerCase(ENGLISH))
+    }
+
+    val array = name.split("_")
+    buf.append(array.head.toLowerCase(ENGLISH))
+
+    @annotation.tailrec
+    def loop(i: Int): Unit = {
+      if(i < array.length) {
+        toProperCase(array(i))
+        loop(i + 1)
+      }
+    }
+    loop(1)
+    buf.toString
+  }
+
+  def camelCaseToSnakeCase(str: String): String = {
+    if(str.isEmpty) {
+      ""
+    } else {
+      val buf = new java.lang.StringBuilder(str.length)
+      buf.append(str.head.toLower)
+      val array = str.toCharArray
+      @annotation.tailrec
+      def loop(i: Int): String = {
+        if(i < array.length) {
+          val c = array(i)
+          if('A' <= c && c <= 'Z') {
+            buf.append('_')
+            buf.append((c + 32).asInstanceOf[Char])
+          } else {
+            buf.append(c)
+          }
+          loop(i + 1)
+        } else {
+          buf.toString
+        }
+      }
+      loop(1)
+    }
+  }
 }
