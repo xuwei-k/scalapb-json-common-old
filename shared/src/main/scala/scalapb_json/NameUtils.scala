@@ -66,7 +66,7 @@ object NameUtils {
       toLowerCase(s.substring(1), buf)
     }
 
-    val array = name.split("_")
+    val array = name.split("\\_")
     toLowerCase(array(0), buf)
 
     @annotation.tailrec
